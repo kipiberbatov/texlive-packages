@@ -38,8 +38,20 @@ jobs:
           cat texlive.profile.tmp
           echo "-------------------------------------"
           
-          # Run the installer with the fully-resolved profile
-          ./install-tl --profile=texlive.profile.tmp -no-gui
+          # --- THE CRUCIAL FIX ---
+          # 1. Ensure the target directory exists.
+          mkdir -p ${{ env.TEXLIVE_DIR }}
+
+          # 2. Forcefully set the variable paths using environment variables.
+          #    This overrides any conflicting internal logic in the script.
+          export TEXLIVE_INSTALL_TEXMFLOCAL=${{ env.TEXLIVE_DIR }}/texmf-local
+          export TEXLIVE_INSTALL_TEXMFCONFIG=${{ env.TEXLIVE_DIR }}/texmf-config
+          export TEXLIVE_INSTALL_TEXMFVAR=${{ env.TEXLIVE_DIR }}/texmf-var
+          export TEXLIVE_INSTALL_TEXMFHOME=${{ env.TEXLIVE_DIR }}/texmf-home
+
+          # 3. Add the --portable flag the installer.
+          #    This tells the installer to create a fully self-contained tree.
+          ./install-tl --profile=texlive.profile.tmp -portable -no-gui
 
       - name: Add TeX Live to PATH
         run: |
