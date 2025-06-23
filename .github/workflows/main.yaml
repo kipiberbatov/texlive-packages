@@ -60,9 +60,15 @@ jobs:
           # it do what it wants, just to a location we control.
           ./install-tl --profile=minimal.profile -no-gui
 
-          # 6. The installation is now complete inside our target directory.
-          # Add the new binaries to the PATH for the rest of the job.
-          echo "$INSTALL_DIR/*/bin/x86_64-linux" >> $GITHUB_PATH
+          # 6. Set the path for future steps AND the current step
+          #    Find the bin directory using a wildcard
+          TEXLIVE_BIN_DIR=$(find "$INSTALL_DIR" -type d -name "x86_64-linux")
+          
+          # Add to GITHUB_PATH for subsequent steps in the job
+          echo "$TEXLIVE_BIN_DIR" >> $GITHUB_PATH
+          
+          # THE FIX: Add to the current shell's PATH for commands in this step
+          export PATH="$TEXLIVE_BIN_DIR:$PATH"
 
           # 7. Verify the installation
           echo "Installation successful. tlmgr is now in the PATH:"
