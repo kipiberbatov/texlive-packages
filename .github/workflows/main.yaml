@@ -23,26 +23,51 @@ jobs:
           echo "TEXLIVE_YEAR=$(date +%Y)" >> $GITHUB_ENV
           echo "RELEASE_TAG=tl-$(date +%Y%m%d)" >> $GITHUB_ENV
 
-      - name: Install minimal TeX Live
+      - name: Install TeX Live (Symlink Hijack Method)
         run: |
-          # 1. Download and extract
+          # 1. This is the directory that will become our final portable installation.
+          INSTALL_DIR="${{ env.TEXLIVE_DIR }}"
+          mkdir -p "$INSTALL_DIR"
+
+          # 2. THE HIJACK:
+          # The installer insists on writing to /usr/local/texlive. We will
+          # delete that path (if it exists) and replace it with a symbolic
+          # link to the directory we actually want to install into.
+          echo "Hijacking /usr/local/texlive to point to our workspace directory..."
+          sudo rm -rf /usr/local/texlive
+          sudo ln -s "$INSTALL_DIR" /usr/local/texlive
+
+          # 3. Download and extract the installer as before.
           wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
           tar -xzf install-tl-unx.tar.gz
           cd install-tl-*/
 
-          # 2. Create the minimal profile on the fly
-          sed "s#__TEXDIR__#${{ env.TEXLIVE_DIR }}#g" ../texlive.profile \
-          > texlive.profile.tmp
+          # 4. Use an absolutely minimal profile.
+          # We DO NOT specify TEXDIR here. We let the installer use its
+          # default location, which we have now hijacked.
+          cat > minimal.profile <<EOF
+          selected_scheme scheme-minimal
+          option_doc 0
+          option_src 0
+          EOF
 
-          echo "--- Using minimal texlive.profile.tmp ---"
-          cat texlive.profile.tmp
-          echo "-----------------------------------------"
+          echo "--- Installer will now write to its default path, which is a symlink ---"
+          ls -ld /usr/local/texlive
 
-          # 3. Run the installer using ONLY the -portable flag to control paths.
-          ./install-tl --profile=texlive.profile.tmp -portable -no-gui
+          # 5. Run the installer. It will think it's performing a system
+          # install, but all files will land in our $INSTALL_DIR.
+          # No special flags like -portable are needed because we are letting
+          # it do what it wants, just to a location we control.
+          ./install-tl --profile=minimal.profile -no-gui
 
-          # 4. Add the new installation to the PATH for subsequent steps
-          echo "${{ env.TEXLIVE_DIR }}/bin/x86_64-linux" >> $GITHUB_PATH
+          # 6. The installation is now complete inside our target directory.
+          # Add the new binaries to the PATH for the rest of the job.
+          echo "$INSTALL_DIR/*/bin/x86_64-linux" >> $GITHUB_PATH
+
+          # 7. Verify the installation
+          echo "Installation successful. tlmgr is now in the PATH:"
+          which tlmgr
+          tlmgr --version
 
       - name: Add TeX Live to PATH
         run: |
