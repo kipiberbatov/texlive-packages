@@ -83,7 +83,6 @@ jobs:
         run: |
           # Update the package manager to the latest version from the network
           tlmgr option repository ctan
-          tlmgr update --self
 
           # Install all packages listed in packages.txt
           cat $GITHUB_WORKSPACE/packages.txt | xargs tlmgr install
