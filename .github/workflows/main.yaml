@@ -29,11 +29,16 @@ jobs:
           tar -xzf install-tl-unx.tar.gz
           cd install-tl-*/
 
-          # Create a profile on the fly, pointing to our workspace directory
-          sed "s|TEXDIR.*|TEXDIR ${{ env.TEXLIVE_DIR }}|" ../texlive.profile \
+          echo "Create a profile pointing to our workspace directory"
+          sed "s#__TEXDIR__#${{ env.TEXLIVE_DIR }}#g" ../texlive.profile \
           > texlive.profile.tmp
 
-          # Run the installer. This will be very fast because the scheme is minimal.
+          # For debugging
+          echo "--- Generated texlive.profile.tmp ---"
+          cat texlive.profile.tmp
+          echo "-------------------------------------"
+          
+          # Run the installer with the fully-resolved profile
           ./install-tl --profile=texlive.profile.tmp -no-gui
 
       - name: Add TeX Live to PATH

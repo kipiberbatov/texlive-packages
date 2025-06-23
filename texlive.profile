@@ -1,8 +1,8 @@
 selected_scheme scheme-minimal
-TEXDIR /home/runner/work/texlive-packages/texlive-packages/texlive-portable
-TEXMFLOCAL $TEXDIR/texmf-local
-TEXMFCONFIG $TEXDIR/texmf-config
-TEXMFVAR $TEXDIR/texmf-var
-TEXMFHOME $TEXDIR/texmf-home
+TEXDIR __TEXDIR__
+TEXMFLOCAL __TEXDIR__/texmf-local
+TEXMFCONFIG __TEXDIR__/texmf-config
+TEXMFVAR __TEXDIR__/texmf-var
+TEXMFHOME __TEXDIR__/texmf-home
 option_doc 0
 option_src 0
