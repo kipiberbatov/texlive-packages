@@ -49,9 +49,10 @@ jobs:
           export TEXLIVE_INSTALL_TEXMFVAR=${{ env.TEXLIVE_DIR }}/texmf-var
           export TEXLIVE_INSTALL_TEXMFHOME=${{ env.TEXLIVE_DIR }}/texmf-home
 
-          # 3. Add the --portable flag the installer.
+          # 3. Add the -portable and -no-sys-dirs flags the installer.
           #    This tells the installer to create a fully self-contained tree.
-          ./install-tl --profile=texlive.profile.tmp -portable -no-gui
+          ./install-tl --profile=texlive.profile.tmp -portable -no-sys-dirs \
+          -no-gui
 
       - name: Add TeX Live to PATH
         run: |
