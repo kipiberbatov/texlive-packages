@@ -49,10 +49,22 @@ jobs:
           export TEXLIVE_INSTALL_TEXMFVAR=${{ env.TEXLIVE_DIR }}/texmf-var
           export TEXLIVE_INSTALL_TEXMFHOME=${{ env.TEXLIVE_DIR }}/texmf-home
 
-          # 3. Add the -portable and -no-sys-dirs flags the installer.
-          #    This tells the installer to create a fully self-contained tree.
-          ./install-tl --profile=texlive.profile.tmp -portable -no-sys-dirs \
-          -no-gui
+          # 3. Run the installer, but SKIP the failing post-install steps
+          #    This will only copy the files into place.
+          ./install-tl --profile=texlive.profile.tmp -no-post-install -no-gui
+
+          # 4. Add the new, incomplete installation to the PATH
+          #    This is the most critical part.
+          echo "${{ env.TEXLIVE_DIR }}/bin/x86_64-linux" >> $GITHUB_PATH
+
+          # 5. Manually run the post-installation tasks.
+          #    Since the correct `tlmgr` and `fmtutil-sys` are now in the PATH,
+          #    they will use the correct configuration and write to the portable
+          #    directory.
+          #    We also need to rehash the file database.
+          texhash
+          updmap-sys
+          fmtutil-sys --all
 
       - name: Add TeX Live to PATH
         run: |
