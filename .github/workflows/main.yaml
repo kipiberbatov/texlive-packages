@@ -1,0 +1,65 @@
+name: Main workflow
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 1 * *' # Run on the 1st of every month
+
+jobs:
+  build:
+    name: Build and Release Portable TeX Live
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set TeX Live version and paths
+        id: paths
+        run: |
+          echo "TEXLIVE_DIR=$GITHUB_WORKSPACE/texlive-portable" >> $GITHUB_ENV
+          echo "TEXLIVE_YEAR=$(date +%Y)" >> $GITHUB_ENV
+          echo "RELEASE_TAG=tl-$(date +%Y%m%d)" >> $GITHUB_ENV
+
+      - name: Install minimal TeX Live
+        run: |
+          wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz
+          tar -xzf install-tl-unx.tar.gz
+          cd install-tl-*
+
+          # Create a profile on the fly, pointing to our workspace directory
+          sed "s|TEXDIR.*|TEXDIR ${{ env.TEXLIVE_DIR }}|" ../texlive.profile \
+          > texlive.profile.tmp
+
+          # Run the installer. This will be very fast because the scheme is minimal.
+          ./install-tl --profile=texlive.profile.tmp -no-gui
+
+      - name: Add TeX Live to PATH
+        run: |
+          echo "$TEXLIVE_DIR/$TEXLIVE_YEAR/bin/x86_64-linux" >> $GITHUB_PATH
+
+      - name: Install TeX Live Collections and Packages
+        run: |
+          # Update the package manager to the latest version from the network
+          tlmgr option repository ctan
+          tlmgr update --self
+
+          # Install all packages listed in packages.txt
+          cat $GITHUB_WORKSPACE/packages.txt | xargs tlmgr install
+
+      - name: Clean up unnecessary files
+        run: |
+          # This step is crucial for keeping the final archive size down.
+          rm -rf $TEXLIVE_DIR/$TEXLIVE_YEAR/install-tl.log
+          rm -rf $TEXLIVE_DIR/$TEXLIVE_YEAR/texmf-dist/doc
+          rm -rf $TEXLIVE_DIR/$TEXLIVE_YEAR/texmf-dist/source
+          rm -rf $TEXLIVE_DIR/$TEXLIVE_YEAR/texmf-dist/man
+
+      - name: Create TeX Live Tarball
+        run: tar -czf texlive.tar.gz -C ${{ env.TEXLIVE_DIR }} .
+
+      - name: Create Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: TeX Live ${{ env.RELEASE_TAG }} (extra, cyrillic, fonts)
+          files: texlive.tar.gz
