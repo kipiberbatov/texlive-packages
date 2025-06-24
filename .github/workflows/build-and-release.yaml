@@ -1,0 +1,61 @@
+name: Build Relocatable TeX Live for Linux x86_64
+
+on:
+  workflow_dispatch:
+    inputs:
+      texlive_year:
+        description: 'The TeX Live year to build (e.g., 2025)'
+        required: true
+        type: string
+      release_tag:
+        description: 'The Git tag for the release (e.g., v2025.0)'
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build Relocatable TeX Live for Linux x86_64
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      TEXLIVE_YEAR: ${{ github.event.inputs.texlive_year }}
+      INSTALL_DIR: ${{ github.workspace }}/texlive-${{ github.event.inputs.texlive_year }}
+      ARCHIVE_NAME: "texlive-${{ github.event.inputs.texlive_year }}.tar.gz"
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Make the build script executable
+        run: chmod +x ./.github/scripts/build-texlive.sh
+
+      - name: Install TeX Live using a build script
+        run: ./.github/scripts/build-texlive.sh $TEXLIVE_YEAR
+
+      - name: Install TeX Live collections and packages
+        run: |
+          echo "Installing packages defined in 'packages.txt'..."
+          tlmgr option repository ctan
+          cat packages.txt | xargs tlmgr install
+
+      - name: Clean up and finalize installation
+        run: |
+          echo "Removing unnecessary files to reduce size..."
+          rm -rf "$INSTALL_DIR"/*/texmf-dist/doc
+          rm -rf "$INSTALL_DIR"/*/texmf-dist/source
+          rm -rf "$INSTALL_DIR"/*/texmf-local
+          rm -rf "$INSTALL_DIR"/*/install-tl.log
+
+      - name: Create TeX Live tarball
+        run: |
+          echo "Creating archive: $ARCHIVE_NAME ..."
+          tar -czf "$ARCHIVE_NAME" -C "$INSTALL_DIR" .
+          echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+
+      - name: Upload the Tex Live distribution as a release asset
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag }}
+          name: "TeX Live ${{ github.event.inputs.texlive_year }}"
+          body: "TeX Live distribution with packages defined in packages.txt"
+          files: ${{ env.ARCHIVE_NAME }}
