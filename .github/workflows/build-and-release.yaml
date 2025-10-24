@@ -36,7 +36,15 @@ jobs:
         run: |
           echo "Installing packages defined in 'packages.txt'..."
           tlmgr option repository ctan
+          tlmgr update --self
           cat packages.txt | xargs tlmgr install
+          mktexlsr
+          updmap-sys --enable Map=cm-super.map
+          updmap-sys --enable Map=lm.map
+          mktexlsr
+
+      - name: Remove old PK bitmaps to prevent fallback
+        run: rm -rf "$INSTALL_DIR"/*/texmf-var/fonts/pk || true
 
       - name: Clean up and finalize installation
         run: |
