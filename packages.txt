@@ -2,3 +2,4 @@ collection-latexextra
 collection-langcyrillic
 collection-fontsextra
 collection-luatex
+elsarticle
