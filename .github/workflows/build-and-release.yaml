@@ -40,8 +40,7 @@ jobs:
           tlmgr option repository ctan
           cat packages.txt | xargs -n1 tlmgr install
           mktexlsr
-          updmap-sys --enable Map=cm-super.map
-          updmap-sys --enable Map=lm.map
+          updmap-sys --enable Map=cm-super.map --syncwithtrees
           mktexlsr
 
       - name: Remove old PK bitmaps to prevent fallback
