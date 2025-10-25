@@ -35,9 +35,10 @@ jobs:
       - name: Install TeX Live collections and packages
         run: |
           echo "Installing packages defined in 'packages.txt'..."
-          tlmgr option repository ctan
+          set -euo pipefail
           tlmgr update --self
-          cat packages.txt | xargs tlmgr install
+          tlmgr option repository ctan
+          cat packages.txt | xargs -n1 tlmgr install
           mktexlsr
           updmap-sys --enable Map=cm-super.map
           updmap-sys --enable Map=lm.map
