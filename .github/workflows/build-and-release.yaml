@@ -24,7 +24,7 @@ jobs:
       ARCHIVE_NAME: "texlive-${{ github.event.inputs.texlive_year }}.tar.gz"
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Make the build script executable
         run: chmod +x ./.github/scripts/build-texlive.sh
