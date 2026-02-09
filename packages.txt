@@ -4,3 +4,4 @@ collection-fontsextra
 collection-luatex
 elsarticle
 cm-super
+latexdiff
